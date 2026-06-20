@@ -42,13 +42,9 @@ Powered by Groq API (Llama 3.3 70B). [Live on Vercel](https://moodplaylist.verce
 
 ## Screenshots
 
-> Add screenshots of the following states:
-
-1. **Home Screen** -- The empty form with the mood input textarea and "Generate Playlist" button
-2. **Loading State** -- The spinner animation while the AI generates the playlist
-3. **Generated Playlist** -- A full playlist card showing the title, cover art description, and numbered track list with YouTube links
-4. **Mobile View** -- The responsive layout on a narrow screen
-5. **Error State** -- The error toast when the API call fails
+| Home | Generated Playlist |
+|------|-------------------|
+| ![Home screen](public/screenshots/home.png) | ![Playlist](public/screenshots/playlist.png) |
 
 ---
 
@@ -124,112 +120,6 @@ Frontend renders playlist card with tracks + YouTube links
 3. **Response** -- The AI returns a JSON object containing a playlist title, cover art description, and an array of tracks (song + artist)
 4. **Album Art** -- Server fetches real artwork from iTunes for each track
 5. **Display** -- The frontend renders the playlist as a styled card with album art thumbnails and YouTube links
-
----
-
-## API Reference
-
-### Generate Playlist
-
-```
-POST /api/generate
-```
-
-**Request Body:**
-
-```json
-{
-  "mood": "feeling nostalgic about summer road trips"
-}
-```
-
-| Field  | Type   | Required | Description |
-|--------|--------|----------|-------------|
-| `mood` | string | Yes      | Natural-language description of the user's mood or feeling (max 500 chars) |
-
-**Response (200):**
-
-```json
-{
-  "title": "Windows Down, Stars Out",
-  "coverArt": "A warm sunset highway stretching into the horizon, dashboard lit in amber, a mixtape half-visible in the cupholder",
-  "tracks": [
-    { "song": "Fast Car", "artist": "Tracy Chapman", "albumArt": "https://..." },
-    { "song": "On The Road Again", "artist": "Willie Nelson", "albumArt": "https://..." },
-    { "song": "Take It Easy", "artist": "Eagles", "albumArt": "https://..." },
-    { "song": "Born to Run", "artist": "Bruce Springsteen", "albumArt": "https://..." },
-    { "song": "Radar Love", "artist": "Golden Earring", "albumArt": "https://..." },
-    { "song": "Life is a Highway", "artist": "Tom Cochrane", "albumArt": "https://..." },
-    { "song": "Shut Up and Drive", "artist": "Rihanna", "albumArt": "https://..." },
-    { "song": "Drive", "artist": "Incubus", "albumArt": "https://..." }
-  ]
-}
-```
-
-**Error Response (400/500):**
-
-```json
-{
-  "error": "mood is required"
-}
-```
-
----
-
-## Project Structure
-
-```
-MoodPlaylist/
-├── .env.example          # Template for environment variables
-├── .gitignore            # Git ignore rules (node_modules, .env)
-├── .mcp.json             # MCP server config (Context7)
-├── package.json          # Dependencies and scripts
-├── server.js             # Express server + Groq API integration
-├── vercel.json           # Vercel deployment config
-└── public/
-    ├── index.html        # Single-page HTML structure
-    ├── style.css         # Design system and styles
-    └── app.js            # Frontend logic and DOM manipulation
-```
-
----
-
-## Design System
-
-The UI uses a custom dark-mode design system with Spotify-inspired aesthetics.
-
-### Colors
-
-| Token | Value | Usage |
-|-------|-------|-------|
-| `--color-primary` | `#1DB954` | Buttons, accents, active states |
-| `--color-primary-hover` | `#1ed760` | Button hover state |
-| `--color-background` | `#000000` | Page background (OLED black) |
-| `--color-surface` | `#121212` | Card backgrounds |
-| `--color-surface-elevated` | `#1a1a1a` | Elevated elements |
-| `--color-foreground` | `#ffffff` | Primary text |
-| `--color-foreground-muted` | `#a0a0a0` | Secondary text |
-| `--color-error` | `#e74c3c` | Error states |
-
-### Typography
-
-| Token | Font | Usage |
-|-------|------|-------|
-| `--font-display` | Righteous | Headings, playlist titles |
-| `--font-body` | Poppins | Body text, UI elements |
-
-### Spacing
-
-4px base grid: `--space-1` (4px) through `--space-16` (64px)
-
-### Border Radius
-
-| Token | Value | Usage |
-|-------|-------|-------|
-| `--radius-sm` | 6px | Small elements |
-| `--radius-md` | 10px | Inputs, cards |
-| `--radius-lg` | 16px | Large cards |
-| `--radius-full` | 9999px | Pills, circles |
 
 ---
 
