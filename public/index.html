@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MoodPlaylist</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <h1>🎵 MoodPlaylist</h1>
+    <p class="subtitle">Tell me how you're feeling, I'll build you a playlist.</p>
+
+    <form id="moodForm">
+      <textarea id="moodInput" placeholder="e.g. I just got promoted and want to celebrate..." rows="3"></textarea>
+      <button type="submit" id="generateBtn">Generate Playlist</button>
+    </form>
+
+    <div id="playlist" class="hidden">
+      <h2 id="playlistTitle"></h2>
+      <p id="coverArt" class="cover-art"></p>
+      <ol id="trackList"></ol>
+    </div>
+
+    <div id="error" class="hidden"></div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

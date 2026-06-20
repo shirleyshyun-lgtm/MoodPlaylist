@@ -1,0 +1,137 @@
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: #0f0f0f;
+  color: #e0e0e0;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  padding: 2rem 1rem;
+}
+
+.container {
+  max-width: 520px;
+  width: 100%;
+}
+
+h1 {
+  font-size: 2rem;
+  margin-bottom: 0.25rem;
+}
+
+.subtitle {
+  color: #888;
+  margin-bottom: 1.5rem;
+}
+
+textarea {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #333;
+  border-radius: 8px;
+  background: #1a1a1a;
+  color: #e0e0e0;
+  font-size: 1rem;
+  resize: vertical;
+}
+
+textarea:focus {
+  outline: none;
+  border-color: #1db954;
+}
+
+button {
+  margin-top: 0.75rem;
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 8px;
+  background: #1db954;
+  color: #000;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  width: 100%;
+}
+
+button:hover { background: #1ed760; }
+button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+#playlist {
+  margin-top: 2rem;
+  background: #1a1a1a;
+  border-radius: 12px;
+  padding: 1.5rem;
+}
+
+#playlist h2 {
+  font-size: 1.4rem;
+  margin-bottom: 0.5rem;
+  color: #1db954;
+}
+
+.cover-art {
+  font-style: italic;
+  color: #888;
+  margin-bottom: 1.25rem;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+#trackList {
+  list-style: none;
+  counter-reset: track;
+}
+
+#trackList li {
+  counter-increment: track;
+  padding: 0.6rem 0;
+  border-bottom: 1px solid #222;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+#trackList li:last-child { border-bottom: none; }
+
+#trackList li::before {
+  content: counter(track);
+  color: #555;
+  font-size: 0.85rem;
+  min-width: 1.5rem;
+  text-align: right;
+}
+
+.track-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.track-song {
+  font-weight: 500;
+  color: #e0e0e0;
+}
+
+.track-artist {
+  font-size: 0.85rem;
+  color: #888;
+}
+
+.youtube-link {
+  color: #ff4444;
+  text-decoration: none;
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+
+.youtube-link:hover { text-decoration: underline; }
+
+.hidden { display: none; }
+
+#error {
+  margin-top: 1rem;
+  color: #ff4444;
+  background: #1a0000;
+  padding: 0.75rem;
+  border-radius: 8px;
+}
