@@ -2,7 +2,10 @@
   "enabledPlugins": {
     "ui-ux-pro-max@ui-ux-pro-max-skill": true
   },
+  "enableAllProjectMcpServers": true,
   "enabledMcpjsonServers": [
+    "git",
     "context7"
   ]
+  
 }
