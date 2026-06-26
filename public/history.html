@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MoodPlaylist - History</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Righteous&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #000000;
+      --surface: #121212;
+      --surface-elevated: #1a1a1a;
+      --surface-hover: #222222;
+      --border: #282828;
+      --text: #ffffff;
+      --text-muted: #a0a0a0;
+      --text-subtle: #666666;
+      --primary: #1DB954;
+      --error: #e74c3c;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Poppins', -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 2rem 1rem;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      font-size: 1.5rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .subtitle {
+      color: var(--text-muted);
+      font-size: 0.875rem;
+      margin-bottom: 2rem;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 3rem 1rem;
+      color: var(--text-muted);
+    }
+
+    .empty-state svg {
+      margin-bottom: 1rem;
+      color: var(--text-subtle);
+    }
+
+    .empty-state p {
+      margin-bottom: 1.5rem;
+    }
+
+    .empty-state a {
+      color: var(--primary);
+      text-decoration: none;
+    }
+
+    .empty-state a:hover {
+      text-decoration: underline;
+    }
+
+    .history-list {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .history-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      transition: border-color 0.15s ease;
+      cursor: pointer;
+    }
+
+    .history-card:hover {
+      border-color: var(--primary);
+    }
+
+    .history-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      padding: 1rem 1.25rem;
+      background: linear-gradient(135deg, rgba(29, 185, 84, 0.05) 0%, transparent 60%);
+    }
+
+    .history-card-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .history-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--primary);
+      margin-bottom: 0.25rem;
+    }
+
+    .history-mood {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      font-style: italic;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .history-date {
+      font-size: 0.7rem;
+      color: var(--text-subtle);
+      white-space: nowrap;
+      margin-left: 1rem;
+    }
+
+    .history-tracks {
+      padding: 0 1.25rem 1rem;
+    }
+
+    .history-track-count {
+      font-size: 0.75rem;
+      color: var(--text-subtle);
+      margin-bottom: 0.5rem;
+    }
+
+    .history-track-list {
+      list-style: none;
+    }
+
+    .history-track-list li {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.35rem 0;
+      font-size: 0.8rem;
+    }
+
+    .history-track-num {
+      color: var(--text-subtle);
+      font-size: 0.7rem;
+      min-width: 1.5rem;
+    }
+
+    .history-track-song {
+      color: var(--text);
+      flex: 1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .history-track-artist {
+      color: var(--text-muted);
+      font-size: 0.75rem;
+    }
+
+    .history-card-actions {
+      display: flex;
+      justify-content: flex-end;
+      padding: 0 1.25rem 0.75rem;
+      gap: 0.5rem;
+    }
+
+    .action-btn {
+      padding: 0.375rem 0.75rem;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: transparent;
+      color: var(--text-muted);
+      font-size: 0.7rem;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .action-btn:hover {
+      border-color: var(--text-muted);
+      color: var(--text);
+    }
+
+    .action-btn.delete:hover {
+      border-color: var(--error);
+      color: var(--error);
+    }
+
+    .back-link {
+      display: inline-block;
+      margin-top: 2rem;
+      color: var(--primary);
+      text-decoration: none;
+      font-size: 0.875rem;
+    }
+
+    .back-link:hover {
+      text-decoration: underline;
+    }
+
+    .header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.5rem;
+    }
+
+    .clear-btn {
+      padding: 0.5rem 1rem;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: transparent;
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      font-family: inherit;
+      cursor: pointer;
+    }
+
+    .clear-btn:hover {
+      border-color: var(--error);
+      color: var(--error);
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 2rem;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 0.75rem 1.5rem;
+      border-radius: 8px;
+      background: var(--primary);
+      color: #000;
+      font-size: 0.875rem;
+      font-weight: 500;
+      animation: slideUp 0.3s ease-out;
+      z-index: 100;
+    }
+
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateX(-50%) translateY(16px); }
+      to { opacity: 1; transform: translateX(-50%) translateY(0); }
+    }
+
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header-row">
+      <div>
+        <h1>📜 Playlist History</h1>
+        <p class="subtitle">Your saved playlists (up to 50)</p>
+      </div>
+      <button class="clear-btn" id="clearBtn">Clear All</button>
+    </div>
+
+    <div id="historyContent">
+      <!-- Populated by JS -->
+    </div>
+
+    <a href="/" class="back-link">← Back to MoodPlaylist</a>
+  </div>
+
+  <script>
+    const HISTORY_KEY = 'moodplaylist_history';
+    const historyContent = document.getElementById('historyContent');
+    const clearBtn = document.getElementById('clearBtn');
+
+    // Load and render history
+    function renderHistory() {
+      const history = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
+
+      if (history.length === 0) {
+        historyContent.innerHTML = `
+          <div class="empty-state">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>
+            </svg>
+            <p>No playlists saved yet</p>
+            <a href="/">Generate your first playlist →</a>
+          </div>
+        `;
+        clearBtn.classList.add('hidden');
+        return;
+      }
+
+      clearBtn.classList.remove('hidden');
+
+      historyContent.innerHTML = `
+        <div class="history-list">
+          ${history.map((p, index) => `
+            <div class="history-card" data-index="${index}">
+              <div class="history-card-header">
+                <div class="history-card-info">
+                  <div class="history-title">${escapeHtml(p.title)}</div>
+                  <div class="history-mood">"${escapeHtml(p.mood)}"</div>
+                </div>
+                <div class="history-date">${formatDate(p.createdAt)}</div>
+              </div>
+              <div class="history-tracks">
+                <div class="history-track-count">${p.tracks.length} tracks</div>
+                <ul class="history-track-list">
+                  ${p.tracks.slice(0, 3).map((t, i) => `
+                    <li>
+                      <span class="history-track-num">${i + 1}.</span>
+                      <span class="history-track-song">${escapeHtml(t.song)}</span>
+                      <span class="history-track-artist">${escapeHtml(t.artist)}</span>
+                    </li>
+                  `).join('')}
+                  ${p.tracks.length > 3 ? `<li style="color:var(--text-subtle);font-size:0.7rem;">+${p.tracks.length - 3} more</li>` : ''}
+                </ul>
+              </div>
+              <div class="history-card-actions">
+                <button class="action-btn" onclick="viewPlaylist(${index})">View</button>
+                <button class="action-btn delete" onclick="deletePlaylist(${index})">Delete</button>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      `;
+    }
+
+    function viewPlaylist(index) {
+      const history = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
+      const playlist = history[index];
+      if (!playlist) return;
+
+      // Store in sessionStorage and open in main page
+      sessionStorage.setItem('viewPlaylist', JSON.stringify(playlist));
+      window.location.href = '/';
+    }
+
+    function deletePlaylist(index) {
+      const history = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
+      history.splice(index, 1);
+      localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+      renderHistory();
+      showToast('Playlist deleted');
+    }
+
+    clearBtn.addEventListener('click', () => {
+      if (confirm('Delete all saved playlists?')) {
+        localStorage.removeItem(HISTORY_KEY);
+        renderHistory();
+        showToast('History cleared');
+      }
+    });
+
+    function formatDate(isoString) {
+      const d = new Date(isoString);
+      const now = new Date();
+      const diff = now - d;
+      const mins = Math.floor(diff / 60000);
+      const hours = Math.floor(diff / 3600000);
+      const days = Math.floor(diff / 86400000);
+
+      if (mins < 1) return 'Just now';
+      if (mins < 60) return `${mins}m ago`;
+      if (hours < 24) return `${hours}h ago`;
+      if (days < 7) return `${days}d ago`;
+
+      return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    }
+
+    function escapeHtml(str) {
+      const div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+
+    function showToast(message) {
+      const toast = document.createElement('div');
+      toast.className = 'toast';
+      toast.textContent = message;
+      document.body.appendChild(toast);
+      setTimeout(() => toast.remove(), 2000);
+    }
+
+    // Initial render
+    renderHistory();
+  </script>
+</body>
+</html>
