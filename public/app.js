@@ -76,15 +76,6 @@ form.addEventListener('submit', async (e) => {
       tracks: data.tracks,
       createdAt: new Date().toISOString()
     });
-
-    // Save to history
-    saveToHistory({
-      title: data.title,
-      coverArt: data.coverArt,
-      mood: mood,
-      tracks: data.tracks,
-      createdAt: new Date().toISOString()
-    });
   } catch (err) {
     showError(err.message);
   } finally {
