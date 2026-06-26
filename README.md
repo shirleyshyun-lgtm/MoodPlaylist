@@ -64,7 +64,7 @@ Powered by Groq API (Llama 3.3 70B). [Live on Vercel](https://moodplaylist.verce
 
 | Home | Generated Playlist | Admin Dashboard |
 |------|-------------------|-----------------|
-| ![Home](public/screenshots/home.png) | ![Playlist](public/screenshots/playlist.png) | ![Admin](public/screenshots/admin.png) |
+| ![Home](public/screenshots/home.png) | ![Playlist](public/screenshots/history.png) | ![Admin](public/screenshots/admin.png) |
 
 ---
 
