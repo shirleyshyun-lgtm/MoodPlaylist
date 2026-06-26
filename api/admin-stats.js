@@ -1,7 +1,6 @@
 require('dotenv').config();
 const { createClient } = require('@supabase/supabase-js');
 
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY);
 
 module.exports = async function handler(req, res) {
@@ -9,6 +8,7 @@ module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Content-Type', 'application/json');
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
@@ -18,7 +18,7 @@ module.exports = async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  // Parse body manually for Vercel serverless
+  // Parse body
   let body = req.body;
   if (typeof body === 'string') {
     try {
@@ -31,8 +31,26 @@ module.exports = async function handler(req, res) {
   const { password } = body || {};
   const days = parseInt(req.query.days) || 7;
 
-  if (password !== ADMIN_PASSWORD) {
-    return res.status(401).json({ error: 'Invalid password' });
+  if (!password) {
+    return res.status(400).json({ error: 'Password required' });
+  }
+
+  // Check password from database
+  try {
+    const { data: adminUser, error: authError } = await supabase
+      .from('admin_users')
+      .select('id')
+      .eq('password', password)
+      .single();
+
+    if (authError || !adminUser) {
+      return res.status(401).json({ error: 'Invalid password' });
+    }
+  } catch (e) {
+    // Fallback to env var if admin_users table doesn't exist
+    if (password !== process.env.ADMIN_PASSWORD) {
+      return res.status(401).json({ error: 'Invalid password' });
+    }
   }
 
   try {
