@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MoodPlaylist Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #000000;
+      --surface: #121212;
+      --surface-elevated: #1a1a1a;
+      --border: #282828;
+      --text: #ffffff;
+      --text-muted: #a0a0a0;
+      --primary: #1DB954;
+      --error: #e74c3c;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Poppins', -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 2rem 1rem;
+    }
+
+    .container {
+      max-width: 700px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      font-size: 1.5rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .subtitle {
+      color: var(--text-muted);
+      font-size: 0.875rem;
+      margin-bottom: 2rem;
+    }
+
+    /* Login Form */
+    .login-form {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      max-width: 300px;
+    }
+
+    input {
+      padding: 0.75rem;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--surface);
+      color: var(--text);
+      font-family: inherit;
+      font-size: 1rem;
+    }
+
+    input:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+
+    button {
+      padding: 0.75rem 1.5rem;
+      border: none;
+      border-radius: 8px;
+      background: var(--primary);
+      color: #000;
+      font-family: inherit;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #1ed760;
+    }
+
+    /* Stats Dashboard */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.25rem;
+    }
+
+    .stat-label {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.5rem;
+    }
+
+    .stat-value {
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--primary);
+    }
+
+    .stat-value.error {
+      color: var(--error);
+    }
+
+    /* Chart Section */
+    .chart-section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .chart-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.25rem;
+    }
+
+    .chart-header h2 {
+      font-size: 1rem;
+      color: var(--text);
+    }
+
+    .chart-filters {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .filter-btn {
+      padding: 0.375rem 0.75rem;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: transparent;
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .filter-btn:hover {
+      border-color: var(--text-muted);
+      color: var(--text);
+      background: transparent;
+    }
+
+    .filter-btn.active {
+      border-color: var(--primary);
+      color: var(--primary);
+      background: rgba(29, 185, 84, 0.1);
+    }
+
+    .chart-container {
+      display: flex;
+      align-items: flex-end;
+      gap: 3px;
+      height: 180px;
+      padding-top: 1rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .chart-bar-wrapper {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      height: 100%;
+      justify-content: flex-end;
+    }
+
+    .chart-bar {
+      width: 100%;
+      max-width: 40px;
+      background: var(--primary);
+      border-radius: 4px 4px 0 0;
+      min-height: 2px;
+      transition: height 0.5s ease-out;
+      position: relative;
+    }
+
+    .chart-bar:hover {
+      background: #1ed760;
+    }
+
+    .chart-bar-tooltip {
+      display: none;
+      position: absolute;
+      bottom: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 4px 8px;
+      background: var(--surface-elevated);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 0.7rem;
+      color: var(--text);
+      white-space: nowrap;
+      margin-bottom: 4px;
+      z-index: 10;
+    }
+
+    .chart-bar:hover .chart-bar-tooltip {
+      display: block;
+    }
+
+    .chart-labels {
+      display: flex;
+      gap: 3px;
+      margin-top: 0.5rem;
+    }
+
+    .chart-label {
+      flex: 1;
+      text-align: center;
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* Error List */
+    .errors-section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.25rem;
+    }
+
+    .errors-section h2 {
+      font-size: 1rem;
+      margin-bottom: 1rem;
+      color: var(--error);
+    }
+
+    .error-item {
+      padding: 0.75rem 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.875rem;
+    }
+
+    .error-item:last-child {
+      border-bottom: none;
+    }
+
+    .error-time {
+      color: var(--text-muted);
+      font-size: 0.75rem;
+    }
+
+    .error-msg {
+      margin-top: 0.25rem;
+    }
+
+    .hidden { display: none !important; }
+
+    .header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.5rem;
+    }
+
+    .logout-btn {
+      background: transparent;
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      padding: 0.5rem 1rem;
+      border: 1px solid var(--border);
+    }
+
+    .logout-btn:hover {
+      color: var(--text);
+      border-color: var(--text-muted);
+      background: transparent;
+    }
+
+    .back-link {
+      display: inline-block;
+      margin-top: 2rem;
+      color: var(--primary);
+      text-decoration: none;
+      font-size: 0.875rem;
+    }
+
+    .back-link:hover {
+      text-decoration: underline;
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 2rem;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 0.75rem 1.5rem;
+      border-radius: 8px;
+      background: var(--error);
+      color: white;
+      font-size: 0.875rem;
+      animation: slideUp 0.3s ease-out;
+      z-index: 100;
+    }
+
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateX(-50%) translateY(16px); }
+      to { opacity: 1; transform: translateX(-50%) translateY(0); }
+    }
+
+    @media (max-width: 480px) {
+      .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🎵 MoodPlaylist Admin</h1>
+    <p class="subtitle">Anonymous usage statistics</p>
+
+    <!-- Login (hidden by default, shown only if not logged in) -->
+    <div id="loginSection" class="hidden">
+      <div class="login-form">
+        <input type="password" id="passwordInput" placeholder="Enter admin password">
+        <button onclick="login()">Login</button>
+      </div>
+    </div>
+
+    <!-- Dashboard -->
+    <div id="dashboardSection" class="hidden">
+      <div class="header-row">
+        <div></div>
+        <button class="logout-btn" onclick="logout()">Logout</button>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-label">Total</div>
+          <div class="stat-value" id="totalCount">-</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Today</div>
+          <div class="stat-value" id="todayCount">-</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">This Week</div>
+          <div class="stat-value" id="weekCount">-</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Peak Hour</div>
+          <div class="stat-value" id="peakHour" style="font-size:1.2rem;">-</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Errors Today</div>
+          <div class="stat-value error" id="errorsToday">-</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Total Errors</div>
+          <div class="stat-value error" id="totalErrors">-</div>
+        </div>
+      </div>
+
+      <!-- Chart with filters -->
+      <div class="chart-section">
+        <div class="chart-header">
+          <h2>Usage</h2>
+          <div class="chart-filters">
+            <button class="filter-btn active" data-days="7">7D</button>
+            <button class="filter-btn" data-days="14">2W</button>
+            <button class="filter-btn" data-days="30">1M</button>
+          </div>
+        </div>
+        <div class="chart-container" id="chartContainer"></div>
+        <div class="chart-labels" id="chartLabels"></div>
+      </div>
+
+      <div class="errors-section">
+        <h2>Recent Errors</h2>
+        <div id="errorList">No errors</div>
+      </div>
+
+      <a href="/" class="back-link">← Back to MoodPlaylist</a>
+    </div>
+  </div>
+
+  <script>
+    const loginSection = document.getElementById('loginSection');
+    const dashboardSection = document.getElementById('dashboardSection');
+    const passwordInput = document.getElementById('passwordInput');
+    let currentPassword = null;
+    let currentDays = 7;
+
+    // Check if already logged in — skip login page entirely
+    const savedPassword = localStorage.getItem('adminPassword');
+    if (savedPassword) {
+      currentPassword = savedPassword;
+      fetchStats(savedPassword);
+    } else {
+      loginSection.classList.remove('hidden');
+    }
+
+    passwordInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') login();
+    });
+
+    // Chart filter buttons
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentDays = parseInt(btn.dataset.days);
+        if (currentPassword) fetchStats(currentPassword);
+      });
+    });
+
+    async function login() {
+      const password = passwordInput.value.trim();
+      if (!password) return;
+      currentPassword = password;
+      await fetchStats(password);
+    }
+
+    function logout() {
+      localStorage.removeItem('adminPassword');
+      currentPassword = null;
+      loginSection.classList.remove('hidden');
+      dashboardSection.classList.add('hidden');
+      passwordInput.value = '';
+    }
+
+    async function fetchStats(password) {
+      try {
+        const res = await fetch(`/api/admin/stats?days=${currentDays}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password })
+        });
+
+        if (!res.ok) {
+          localStorage.removeItem('adminPassword');
+          currentPassword = null;
+          loginSection.classList.remove('hidden');
+          dashboardSection.classList.add('hidden');
+          showToast('Invalid password');
+          return;
+        }
+
+        const data = await res.json();
+
+        // Save password for persistence
+        localStorage.setItem('adminPassword', password);
+
+        // Show dashboard immediately (no flash of login)
+        loginSection.classList.add('hidden');
+        dashboardSection.classList.remove('hidden');
+
+        // Update stats
+        document.getElementById('totalCount').textContent = data.total;
+        document.getElementById('todayCount').textContent = data.today;
+        document.getElementById('weekCount').textContent = data.thisWeek;
+        document.getElementById('peakHour').textContent = data.peakHour;
+        document.getElementById('errorsToday').textContent = data.errorsToday;
+        document.getElementById('totalErrors').textContent = data.totalErrors;
+
+        // Render chart
+        renderChart(data.dailyStats || [], currentDays);
+
+        // Update error list
+        const errorList = document.getElementById('errorList');
+        if (data.recentErrors.length === 0) {
+          errorList.innerHTML = '<p style="color: var(--text-muted);">No errors yet</p>';
+        } else {
+          errorList.innerHTML = data.recentErrors.map(e => `
+            <div class="error-item">
+              <div class="error-time">${new Date(e.time).toLocaleString()}</div>
+              <div class="error-msg">${escapeHtml(e.message)}</div>
+            </div>
+          `).join('');
+        }
+      } catch (err) {
+        showToast('Failed to load stats');
+      }
+    }
+
+    function renderChart(dailyStats, days) {
+      const container = document.getElementById('chartContainer');
+      const labelsEl = document.getElementById('chartLabels');
+
+      const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+      const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+      const items = [];
+      for (let i = days - 1; i >= 0; i--) {
+        const d = new Date();
+        d.setDate(d.getDate() - i);
+        const key = d.toISOString().split('T')[0];
+        const count = dailyStats.find(s => s.date === key)?.count || 0;
+
+        // Label format depends on range
+        let label;
+        if (days <= 7) {
+          label = dayNames[d.getDay()];
+        } else if (days <= 14) {
+          label = `${monthNames[d.getMonth()]} ${d.getDate()}`;
+        } else {
+          label = `${d.getDate()}`;
+        }
+
+        items.push({ key, label, count });
+      }
+
+      const maxCount = Math.max(...items.map(d => d.count), 1);
+
+      container.innerHTML = items.map(d => {
+        const height = Math.max((d.count / maxCount) * 100, 2);
+        return `
+          <div class="chart-bar-wrapper">
+            <div class="chart-bar" style="height: ${height}%;">
+              <div class="chart-bar-tooltip">${d.key}: ${d.count}</div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      labelsEl.innerHTML = items.map(d =>
+        `<div class="chart-label">${d.label}</div>`
+      ).join('');
+    }
+
+    function showToast(message) {
+      const toast = document.createElement('div');
+      toast.className = 'toast';
+      toast.textContent = message;
+      document.body.appendChild(toast);
+      setTimeout(() => toast.remove(), 3000);
+    }
+
+    function escapeHtml(str) {
+      const div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+  </script>
+</body>
+</html>

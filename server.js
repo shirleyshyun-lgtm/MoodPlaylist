@@ -2,16 +2,24 @@ require('dotenv').config();
 const express = require('express');
 const path = require('path');
 const rateLimit = require('express-rate-limit');
+const { createClient } = require('@supabase/supabase-js');
 
 const app = express();
 app.use(express.static(path.join(__dirname, 'public')));
-app.use(express.json({ limit: '10kb' })); // Limit request body size
+app.use(express.json({ limit: '10kb' }));
 
 const GROQ_API_KEY = process.env.GROQ_API_KEY;
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
+
+// Supabase client
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_ANON_KEY
+);
 
 // ---- Rate Limiting: 10 requests per minute per IP ----
 const limiter = rateLimit({
-  windowMs: 60 * 1000, // 1 minute
+  windowMs: 60 * 1000,
   max: 10,
   message: { error: 'Too many requests. Please wait a moment and try again.' },
   standardHeaders: true,
@@ -25,9 +33,20 @@ function validateMood(mood) {
   const trimmed = mood.trim();
   if (trimmed.length === 0) return { valid: false, error: 'Please tell me how you\'re feeling' };
   if (trimmed.length > 500) return { valid: false, error: 'Mood description too long (max 500 characters)' };
-  // Strip HTML tags but keep emojis and special chars
   const sanitized = trimmed.replace(/<[^>]*>/g, '');
   return { valid: true, sanitized };
+}
+
+// ---- Log anonymous stat to Supabase ----
+async function logStat(status, errorMessage = null) {
+  try {
+    await supabase.from('playlist_stats').insert({
+      status,
+      error_message: errorMessage
+    });
+  } catch (err) {
+    console.error('Failed to log stat:', err.message);
+  }
 }
 
 // ---- Fetch album art from iTunes Search API ----
@@ -87,7 +106,6 @@ Pick real songs by real artists that genuinely match the mood described.`
     throw new Error(errMsg);
   }
 
-  // Parse JSON with error handling
   const text = data.choices[0].message.content;
   try {
     return JSON.parse(text);
@@ -101,11 +119,10 @@ Pick real songs by real artists that genuinely match the mood described.`
   }
 }
 
-// ---- API Route ----
+// ---- API Route: Generate Playlist ----
 app.post('/api/generate', async (req, res) => {
   const { mood } = req.body;
 
-  // Validate input
   const validation = validateMood(mood);
   if (!validation.valid) {
     return res.status(400).json({ error: validation.error });
@@ -114,27 +131,100 @@ app.post('/api/generate', async (req, res) => {
   try {
     const parsed = await generatePlaylist(validation.sanitized);
 
-    // Validate response structure
     if (!parsed.title || !Array.isArray(parsed.tracks) || parsed.tracks.length === 0) {
       throw new Error('Invalid playlist format received');
     }
 
-    // Fetch album art for all tracks in parallel
     const artPromises = parsed.tracks.map(t => fetchAlbumArt(t.song, t.artist));
     const artUrls = await Promise.all(artPromises);
 
-    // Add albumArt URL to each track
     parsed.tracks = parsed.tracks.map((t, i) => ({
       ...t,
       albumArt: artUrls[i]
     }));
 
+    // Log success (anonymous)
+    logStat('success');
+
     res.json(parsed);
   } catch (err) {
     console.error('Generate error:', err.message);
+    // Log error (anonymous)
+    logStat('error', err.message);
     res.status(500).json({
       error: 'Failed to generate playlist. Please try again.'
     });
+  }
+});
+
+// ---- API Route: Admin Stats ----
+app.post('/api/admin/stats', async (req, res) => {
+  const { password } = req.body;
+  const days = parseInt(req.query.days) || 7;
+
+  if (password !== ADMIN_PASSWORD) {
+    return res.status(401).json({ error: 'Invalid password' });
+  }
+
+  try {
+    // Get all stats
+    const { data: allStats, error } = await supabase
+      .from('playlist_stats')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+    const todayStats = allStats.filter(s => new Date(s.created_at) >= today);
+    const weekStats = allStats.filter(s => new Date(s.created_at) >= weekAgo);
+    const errors = allStats.filter(s => s.status === 'error');
+    const todayErrors = todayStats.filter(s => s.status === 'error');
+
+    // Hourly distribution
+    const hourCounts = new Array(24).fill(0);
+    allStats.forEach(s => {
+      const hour = new Date(s.created_at).getHours();
+      hourCounts[hour]++;
+    });
+    const peakHour = hourCounts.indexOf(Math.max(...hourCounts));
+
+    // Daily stats for selected range
+    const dailyStats = [];
+    for (let i = days - 1; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const dayStart = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+      const dayEnd = new Date(dayStart.getTime() + 24 * 60 * 60 * 1000);
+      const count = allStats.filter(s => {
+        const created = new Date(s.created_at);
+        return created >= dayStart && created < dayEnd;
+      }).length;
+      dailyStats.push({
+        date: dayStart.toISOString().split('T')[0],
+        count
+      });
+    }
+
+    res.json({
+      total: allStats.length,
+      today: todayStats.length,
+      thisWeek: weekStats.length,
+      errorsToday: todayErrors.length,
+      totalErrors: errors.length,
+      peakHour: `${peakHour}:00 - ${peakHour + 1}:00`,
+      dailyStats,
+      recentErrors: errors.slice(0, 5).map(e => ({
+        time: e.created_at,
+        message: e.error_message
+      }))
+    });
+  } catch (err) {
+    console.error('Admin stats error:', err.message);
+    res.status(500).json({ error: 'Failed to fetch stats' });
   }
 });
 
