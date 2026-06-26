@@ -10,6 +10,14 @@ slides_url: slides/pitch.md
 
 I used a project-based approach, building MoodPlaylist incrementally from a simple Express server to a full AI-powered playlist generator. I started by setting up the backend with Groq API integration for mood-based song recommendations, then added the frontend UI, and finally integrated the iTunes API for album artwork. Throughout development, I used Claude Code with skills, agents, and MCP to accelerate development and maintain code quality.
 
+## Screenshots
+
+| Home (with playlist) | History | Admin Dashboard |
+|---------------------|---------|-----------------|
+| ![Home](public/screenshots/home.png) | ![History](public/screenshots/history.png) | ![Admin](public/screenshots/admin.png) |
+
+
+
 ## Evidence — Claude Code usage
 
 ### Skills Used
