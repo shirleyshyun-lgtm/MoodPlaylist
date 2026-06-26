@@ -8,10 +8,34 @@ const coverArt = document.getElementById('coverArt');
 const trackList = document.getElementById('trackList');
 const error = document.getElementById('error');
 
+// Settings menu toggle
+const settingsBtn = document.getElementById('settingsBtn');
+const dropdownMenu = document.getElementById('dropdownMenu');
+
+settingsBtn.addEventListener('click', (e) => {
+  e.stopPropagation();
+  dropdownMenu.classList.toggle('hidden');
+});
+
+// Close menu when clicking outside
+document.addEventListener('click', (e) => {
+  if (!dropdownMenu.contains(e.target) && !settingsBtn.contains(e.target)) {
+    dropdownMenu.classList.add('hidden');
+  }
+});
+
 // Character count
 input.addEventListener('input', () => {
   charCount.textContent = input.value.length;
 });
+
+// Check if viewing a playlist from history
+const viewPlaylistData = sessionStorage.getItem('viewPlaylist');
+if (viewPlaylistData) {
+  sessionStorage.removeItem('viewPlaylist');
+  const data = JSON.parse(viewPlaylistData);
+  renderPlaylist(data);
+}
 
 form.addEventListener('submit', async (e) => {
   e.preventDefault();
@@ -42,35 +66,25 @@ form.addEventListener('submit', async (e) => {
 
     if (!res.ok) throw new Error(data.error || 'Something went wrong');
 
-    title.textContent = data.title;
-    coverArt.textContent = data.coverArt;
-    trackList.innerHTML = data.tracks.map(t => {
-      const query = encodeURIComponent(`${t.song} ${t.artist}`);
-      const youtubeUrl = `https://www.youtube.com/results?search_query=${query}`;
-      const albumArtHtml = t.albumArt
-        ? `<img class="track-art" src="${t.albumArt}" alt="${escapeHtml(t.song)} album art" loading="lazy" />`
-        : `<div class="track-art-placeholder">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-              <path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>
-            </svg>
-          </div>`;
-      return `
-        <li>
-          ${albumArtHtml}
-          <div class="track-info">
-            <div class="track-song">${escapeHtml(t.song)}</div>
-            <div class="track-artist">${escapeHtml(t.artist)}</div>
-          </div>
-          <a class="youtube-link" href="${youtubeUrl}" target="_blank" rel="noopener noreferrer">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
-              <polygon points="5 3 19 12 5 21 5 3"/>
-            </svg>
-            Play
-          </a>
-        </li>`;
-    }).join('');
+    renderPlaylist(data, mood);
 
-    playlist.classList.remove('hidden');
+    // Save to history
+    saveToHistory({
+      title: data.title,
+      coverArt: data.coverArt,
+      mood: mood,
+      tracks: data.tracks,
+      createdAt: new Date().toISOString()
+    });
+
+    // Save to history
+    saveToHistory({
+      title: data.title,
+      coverArt: data.coverArt,
+      mood: mood,
+      tracks: data.tracks,
+      createdAt: new Date().toISOString()
+    });
   } catch (err) {
     showError(err.message);
   } finally {
@@ -84,10 +98,59 @@ form.addEventListener('submit', async (e) => {
   }
 });
 
+function renderPlaylist(data, mood) {
+  title.textContent = data.title;
+  coverArt.textContent = data.coverArt;
+  trackList.innerHTML = data.tracks.map(t => {
+    const query = encodeURIComponent(`${t.song} ${t.artist}`);
+    const youtubeUrl = `https://www.youtube.com/results?search_query=${query}`;
+    const albumArtHtml = t.albumArt
+      ? `<img class="track-art" src="${t.albumArt}" alt="${escapeHtml(t.song)} album art" loading="lazy" />`
+      : `<div class="track-art-placeholder">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>
+          </svg>
+        </div>`;
+    return `
+      <li>
+        ${albumArtHtml}
+        <div class="track-info">
+          <div class="track-song">${escapeHtml(t.song)}</div>
+          <div class="track-artist">${escapeHtml(t.artist)}</div>
+        </div>
+        <a class="youtube-link" href="${youtubeUrl}" target="_blank" rel="noopener noreferrer">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+            <polygon points="5 3 19 12 5 21 5 3"/>
+          </svg>
+          Play
+        </a>
+      </li>`;
+  }).join('');
+  playlist.classList.remove('hidden');
+}
+
 function escapeHtml(str) {
   const div = document.createElement('div');
   div.textContent = str;
   return div.innerHTML;
+}
+
+// ---- History Management ----
+const HISTORY_KEY = 'moodplaylist_history';
+const MAX_HISTORY = 50;
+
+function saveToHistory(playlist) {
+  try {
+    const history = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
+    history.unshift(playlist); // Add to beginning (newest first)
+    // Keep only last MAX_HISTORY
+    if (history.length > MAX_HISTORY) {
+      history.splice(MAX_HISTORY);
+    }
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+  } catch (err) {
+    console.error('Failed to save history:', err);
+  }
 }
 
 let errorTimeout;
