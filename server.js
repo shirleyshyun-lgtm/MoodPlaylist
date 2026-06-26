@@ -1,14 +1,36 @@
 require('dotenv').config();
 const express = require('express');
 const path = require('path');
+const rateLimit = require('express-rate-limit');
 
 const app = express();
 app.use(express.static(path.join(__dirname, 'public')));
-app.use(express.json());
+app.use(express.json({ limit: '10kb' })); // Limit request body size
 
 const GROQ_API_KEY = process.env.GROQ_API_KEY;
 
-// Fetch album art from iTunes Search API (free, no key needed)
+// ---- Rate Limiting: 10 requests per minute per IP ----
+const limiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 10,
+  message: { error: 'Too many requests. Please wait a moment and try again.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+app.use('/api/generate', limiter);
+
+// ---- Input Validation ----
+function validateMood(mood) {
+  if (typeof mood !== 'string') return { valid: false, error: 'Mood must be a string' };
+  const trimmed = mood.trim();
+  if (trimmed.length === 0) return { valid: false, error: 'Please tell me how you\'re feeling' };
+  if (trimmed.length > 500) return { valid: false, error: 'Mood description too long (max 500 characters)' };
+  // Strip HTML tags but keep emojis and special chars
+  const sanitized = trimmed.replace(/<[^>]*>/g, '');
+  return { valid: true, sanitized };
+}
+
+// ---- Fetch album art from iTunes Search API ----
 async function fetchAlbumArt(song, artist) {
   try {
     const query = encodeURIComponent(`${song} ${artist}`);
@@ -16,7 +38,6 @@ async function fetchAlbumArt(song, artist) {
     const res = await fetch(url);
     const data = await res.json();
     if (data.results && data.results.length > 0) {
-      // Replace 100x100 with 300x300 for better quality
       return data.results[0].artworkUrl100?.replace('100x100', '300x300') || null;
     }
     return null;
@@ -25,22 +46,19 @@ async function fetchAlbumArt(song, artist) {
   }
 }
 
-app.post('/api/generate', async (req, res) => {
-  const { mood } = req.body;
-  if (!mood) return res.status(400).json({ error: 'mood is required' });
-
-  try {
-    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${GROQ_API_KEY}`
-      },
-      body: JSON.stringify({
-        model: 'llama-3.3-70b-versatile',
-        messages: [{
-          role: 'user',
-          content: `The user is feeling: "${mood}"
+// ---- Call Groq API with retry ----
+async function generatePlaylist(mood, retries = 1) {
+  const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${GROQ_API_KEY}`
+    },
+    body: JSON.stringify({
+      model: 'llama-3.3-70b-versatile',
+      messages: [{
+        role: 'user',
+        content: `The user is feeling: "${mood}"
 
 Generate a playlist of 8-10 REAL, well-known songs that match this mood. Return ONLY valid JSON in this exact format, no markdown, no explanation:
 
@@ -53,19 +71,53 @@ Generate a playlist of 8-10 REAL, well-known songs that match this mood. Return 
 }
 
 Pick real songs by real artists that genuinely match the mood described.`
-        }],
-        temperature: 0.8
-      })
-    });
+      }],
+      temperature: 0.8
+    })
+  });
 
-    const data = await response.json();
-    if (!response.ok) {
-      console.error('Groq error:', data);
-      return res.status(500).json({ error: data.error?.message || 'Groq API error' });
+  const data = await response.json();
+
+  if (!response.ok) {
+    const errMsg = data.error?.message || 'Groq API error';
+    if (retries > 0) {
+      console.log('Retrying after error:', errMsg);
+      return generatePlaylist(mood, retries - 1);
     }
+    throw new Error(errMsg);
+  }
 
-    const text = data.choices[0].message.content;
-    const parsed = JSON.parse(text);
+  // Parse JSON with error handling
+  const text = data.choices[0].message.content;
+  try {
+    return JSON.parse(text);
+  } catch (parseErr) {
+    console.error('JSON parse failed:', text);
+    if (retries > 0) {
+      console.log('Retrying after JSON parse error');
+      return generatePlaylist(mood, retries - 1);
+    }
+    throw new Error('Received invalid response from AI. Please try again.');
+  }
+}
+
+// ---- API Route ----
+app.post('/api/generate', async (req, res) => {
+  const { mood } = req.body;
+
+  // Validate input
+  const validation = validateMood(mood);
+  if (!validation.valid) {
+    return res.status(400).json({ error: validation.error });
+  }
+
+  try {
+    const parsed = await generatePlaylist(validation.sanitized);
+
+    // Validate response structure
+    if (!parsed.title || !Array.isArray(parsed.tracks) || parsed.tracks.length === 0) {
+      throw new Error('Invalid playlist format received');
+    }
 
     // Fetch album art for all tracks in parallel
     const artPromises = parsed.tracks.map(t => fetchAlbumArt(t.song, t.artist));
@@ -79,8 +131,10 @@ Pick real songs by real artists that genuinely match the mood described.`
 
     res.json(parsed);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Failed to generate playlist' });
+    console.error('Generate error:', err.message);
+    res.status(500).json({
+      error: 'Failed to generate playlist. Please try again.'
+    });
   }
 });
 

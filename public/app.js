@@ -16,7 +16,11 @@ input.addEventListener('input', () => {
 form.addEventListener('submit', async (e) => {
   e.preventDefault();
   const mood = input.value.trim();
-  if (!mood) return;
+  if (!mood) {
+    showError('Please tell me how you\'re feeling');
+    input.focus();
+    return;
+  }
 
   btn.disabled = true;
   btn.innerHTML = `
@@ -68,8 +72,7 @@ form.addEventListener('submit', async (e) => {
 
     playlist.classList.remove('hidden');
   } catch (err) {
-    error.textContent = err.message;
-    error.classList.remove('hidden');
+    showError(err.message);
   } finally {
     btn.disabled = false;
     btn.innerHTML = `
@@ -85,4 +88,26 @@ function escapeHtml(str) {
   const div = document.createElement('div');
   div.textContent = str;
   return div.innerHTML;
+}
+
+let errorTimeout;
+
+function showError(message) {
+  // Clear any existing timeout
+  clearTimeout(errorTimeout);
+
+  error.innerHTML = `
+    <svg class="error-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="10"/>
+      <line x1="12" y1="8" x2="12" y2="12"/>
+      <line x1="12" y1="16" x2="12.01" y2="16"/>
+    </svg>
+    <span class="error-text">${escapeHtml(message)}</span>
+  `;
+  error.classList.remove('hidden');
+
+  // Auto-dismiss after 5 seconds
+  errorTimeout = setTimeout(() => {
+    error.classList.add('hidden');
+  }, 5000);
 }
